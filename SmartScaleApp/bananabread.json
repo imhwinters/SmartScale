@@ -1,0 +1,77 @@
+{
+  "name": "Banana Bread",
+  "steps": [
+    {
+      "instruction": "Ingredients: 4 Ripe Bananas\n85g Unsalted Butter, Melted\n1/3cup Greek Yogurt\n220g Brown Sugar\n2 Large Eggs\n2 tsp Vanilla Extract\n255g All-purpose Flour\n1 1/2 tsp Baking Soda\n1/2 tsp Sea Salt\n135g Chocolate Chips\nCoarse/Turbinado Sugar (optional)",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Heat the oven to 350 degrees. Lightly grease a 9-by-5-inch loaf pan with nonstick spray.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Place bowl on scale. Mash the bananas coarsely w/ a fork. Whisk in the yogurt.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Whisk in the melted butter.",
+      "ingredient": "Melted Butter",
+      "amount": 85,
+      "unit": "g"
+    },
+    {
+      "instruction": "Whisk in the brown sugar.",
+      "ingredient": "Brown Sugar",
+      "amount": 220,
+      "unit": "g"
+    },
+    {
+      "instruction": "Whisk in the eggs.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Whisk in the vanilla.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Switch bowls.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Add the flour to the new bowl.",
+      "ingredient": "Flour",
+      "amount": 255,
+      "unit": "g"
+    },
+    {
+      "instruction": "Whisk in the baking soda.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Whisk in the salt.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Combine the contents of the two bowls. Stir to combine.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Stir in the chocolate.",
+      "ingredient": "Chocolate",
+      "amount": 135,
+      "unit": "g"
+    },
+    {
+      "instruction": "Pour the batter into the prepared loaf pan, and sprinkle the coarse sugar on top if using.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Bake until the edges of the loaf start to pull away from the edge of the pan, and a toothpick comes out with a few moist crums attached.",
+      "note": "non-weighing step"
+    },
+    {
+      "instruction": "Transfer from the oven to a cooling rack and a run a knife around the edge of the banana bread.\nLet cool in the pan for 10 minutes before unmolding and cooling completely.",
+      "note": "non-weighing step"
+    }
+  ]
+}
