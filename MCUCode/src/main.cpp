@@ -6,12 +6,12 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#define HX711_DOUT D2
-#define HX711_CLK  D3
+#define HX711_DOUT D6
+#define HX711_CLK  D5
 
 HX711 scale;
 
-#define CALIBRATION_FACTOR -7050.0
+#define CALIBRATION_FACTOR -214.0000
 
 const int AVG_SAMPLES = 16;
 
