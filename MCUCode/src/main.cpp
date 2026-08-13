@@ -1,20 +1,18 @@
-// Orange is 95g, clip is 7g, weight is 2267g
-// Calibration Factor: -213.95
+#include <Arduino.h>
+#include "HX711.h"
 
-#include <Wire.h>
-#include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h"
-
-#include <Wire.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
-#include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h"
 
-NAU7802 myScale;
+#define HX711_DOUT D2
+#define HX711_CLK  D3
 
-const float CALIBRATION_FACTOR = -213.95;
-long zeroOffset = 0;
+HX711 scale;
+
+#define CALIBRATION_FACTOR -7050.0
+
 const int AVG_SAMPLES = 16;
 
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -27,62 +25,102 @@ class ServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) override {
     deviceConnected = true;
   }
+
   void onDisconnect(BLEServer* pServer) override {
     deviceConnected = false;
     BLEDevice::startAdvertising();
   }
 };
 
-long getAverageReading() {
-  long sum = 0;
+float getAverageWeight() {
+  float sum = 0;
+
   for (int i = 0; i < AVG_SAMPLES; i++) {
-    while (!myScale.available());
-    sum += myScale.getReading();
+    sum += scale.get_units(1);
+    delay(10);
   }
+
   return sum / AVG_SAMPLES;
 }
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin(6, 7);
+  delay(500);
 
-  myScale.begin();
-  myScale.setSampleRate(NAU7802_SPS_10);
-  myScale.setGain(NAU7802_GAIN_128);
-  myScale.calibrateAFE();
-  zeroOffset = getAverageReading();
+  // Initialize HX711
+  scale.begin(HX711_DOUT, HX711_CLK);
+
+  // Set calibration factor
+  scale.set_scale(CALIBRATION_FACTOR);
+
+  // Tare the scale at startup
+  Serial.println("Taring scale");
+  scale.tare();
+
+  Serial.println("Scale ready.");
+  Serial.println("Weight:");
 
   BLEDevice::init("Scale");
+
   BLEServer* pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
 
   BLEService* pService = pServer->createService(SERVICE_UUID);
+
   pCharacteristic = pService->createCharacteristic(
     CHARACTERISTIC_UUID,
-    BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
+    BLECharacteristic::PROPERTY_READ |
+    BLECharacteristic::PROPERTY_NOTIFY
   );
+
   pCharacteristic->addDescriptor(new BLE2902());
+
   pService->start();
 
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(false);
+
   BLEDevice::startAdvertising();
+
+  Serial.println("BLE advertising started.");
 }
 
 void loop() {
+
+  float weight = getAverageWeight();
+
+  Serial.print("Weight: ");
+  Serial.println(weight, 2);
+
   if (deviceConnected) {
-    long averaged = getAverageReading();
-    float weight = (averaged - zeroOffset) / CALIBRATION_FACTOR;
+
     char buf[16];
-    snprintf(buf, sizeof(buf), "%.2f", weight);
+
+    snprintf(
+      buf,
+      sizeof(buf),
+      "%.2f",
+      weight
+    );
+
     pCharacteristic->setValue(buf);
     pCharacteristic->notify();
   }
 
   if (Serial.available()) {
-    if (Serial.read() == 't') {
-      zeroOffset = getAverageReading();
+
+    char command = Serial.read();
+
+    if (command == 't') {
+
+      Serial.println("Taring...");
+
+      scale.tare();
+
+      Serial.println("Tare complete.");
     }
   }
+
+  delay(50);
 }
