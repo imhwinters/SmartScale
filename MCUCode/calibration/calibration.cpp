@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include "HX711.h"
 
-#define HX711_DOUT D6
-#define HX711_CLK  D5
+#define HX711_DOUT D5
+#define HX711_CLK  D6
 
 HX711 scale;
 
@@ -18,7 +18,6 @@ void setup() {
 
     scale.begin(HX711_DOUT, HX711_CLK);
 
-    // Start with no calibration factor.
     scale.set_scale();
 
     Serial.println("HX711 initialized.");
@@ -50,7 +49,6 @@ void setup() {
 
 void loop() {
 
-    // Show the raw reading continuously
     if (scale.wait_ready_timeout(1000)) {
 
         long raw = scale.get_value(10);
@@ -62,7 +60,6 @@ void loop() {
         Serial.println("HX711 not found!");
     }
 
-    // Check for a known weight entered through Serial
     if (Serial.available()) {
 
         String input = Serial.readStringUntil('\n');
@@ -79,12 +76,8 @@ void loop() {
             return;
         }
 
-        // Read several samples with the known weight
         float reading = scale.get_value(20);
 
-        // Calibration factor:
-        // get_value() = raw reading - tare offset
-        // calibration factor = reading / known weight
         float calibrationFactor = reading / knownWeight;
 
         Serial.println();

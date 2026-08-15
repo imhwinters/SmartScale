@@ -7,104 +7,163 @@
 #include <BLE2902.h>
 
 #define HX711_DOUT D6
-#define HX711_CLK  D5
+#define HX711_CLK  D4
 
 HX711 scale;
 
-#define CALIBRATION_FACTOR -214.0000
+#define CALIBRATION_FACTOR -214.4667 // replace with your calibrated value -- run calibration/calibration.cpp
 
-const int AVG_SAMPLES = 16;
+#define AVERAGE_SAMPLES 2
 
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
 BLECharacteristic* pCharacteristic = nullptr;
+
 bool deviceConnected = false;
 
 class ServerCallbacks : public BLEServerCallbacks {
+
   void onConnect(BLEServer* pServer) override {
     deviceConnected = true;
+
+    Serial.println("BLE client connected.");
   }
 
   void onDisconnect(BLEServer* pServer) override {
     deviceConnected = false;
+
+    Serial.println("BLE client disconnected.");
+
     BLEDevice::startAdvertising();
   }
 };
 
-float getAverageWeight() {
-  float sum = 0;
+float getWeight() {
 
-  for (int i = 0; i < AVG_SAMPLES; i++) {
-    sum += scale.get_units(1);
-    delay(10);
+  float total = 0;
+
+  for (int i = 0; i < AVERAGE_SAMPLES; i++) {
+
+    while (!scale.is_ready()) {
+      delay(1);
+    }
+
+    total += scale.get_units(1);
   }
 
-  return sum / AVG_SAMPLES;
+  return total / AVERAGE_SAMPLES;
 }
 
 void setup() {
+
   Serial.begin(115200);
+
   delay(500);
 
-  // Initialize HX711
+  Serial.println();
+  Serial.println("==============================");
+  Serial.println("FAST SMART SCALE");
+  Serial.println("==============================");
+
+  Serial.println("Initializing HX711...");
+
   scale.begin(HX711_DOUT, HX711_CLK);
 
-  // Set calibration factor
   scale.set_scale(CALIBRATION_FACTOR);
 
-  // Tare the scale at startup
-  Serial.println("Taring scale");
-  scale.tare();
+  Serial.println("Checking HX711...");
 
-  Serial.println("Scale ready.");
-  Serial.println("Weight:");
+  if (!scale.wait_ready_timeout(2000)) {
+
+    Serial.println("ERROR: HX711 not detected!");
+    Serial.println("Check:");
+    Serial.println("  VCC");
+    Serial.println("  GND");
+    Serial.println("  DOUT -> D2");
+    Serial.println("  SCK  -> D3");
+
+    while (true) {
+      delay(1000);
+    }
+  }
+
+  Serial.println("HX711 OK.");
+
+  Serial.println();
+  Serial.println("Remove all weight.");
+  Serial.println("Taring...");
+
+  delay(1000);
+
+  scale.tare(10);
+
+  Serial.println("Tare complete.");
+  Serial.println();
+  Serial.println("Starting BLE...");
 
   BLEDevice::init("Scale");
 
   BLEServer* pServer = BLEDevice::createServer();
+
   pServer->setCallbacks(new ServerCallbacks());
 
-  BLEService* pService = pServer->createService(SERVICE_UUID);
+  BLEService* pService =
+      pServer->createService(SERVICE_UUID);
 
-  pCharacteristic = pService->createCharacteristic(
-    CHARACTERISTIC_UUID,
-    BLECharacteristic::PROPERTY_READ |
-    BLECharacteristic::PROPERTY_NOTIFY
-  );
+  pCharacteristic =
+      pService->createCharacteristic(
+        CHARACTERISTIC_UUID,
+        BLECharacteristic::PROPERTY_READ |
+        BLECharacteristic::PROPERTY_NOTIFY
+      );
 
   pCharacteristic->addDescriptor(new BLE2902());
 
   pService->start();
 
-  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  BLEAdvertising* pAdvertising =
+      BLEDevice::getAdvertising();
+
   pAdvertising->addServiceUUID(SERVICE_UUID);
+
   pAdvertising->setScanResponse(false);
 
   BLEDevice::startAdvertising();
 
-  Serial.println("BLE advertising started.");
+  Serial.println("BLE advertising.");
+  Serial.println("Device name: Scale");
+
+  Serial.println();
+  Serial.println("==============================");
+  Serial.println("READY");
+  Serial.println("==============================");
 }
 
 void loop() {
 
-  float weight = getAverageWeight();
+  if (!scale.is_ready()) {
+    return;
+  }
+
+  float weight = getWeight();
 
   Serial.print("Weight: ");
-  Serial.println(weight, 2);
+  Serial.print(weight, 2);
+  Serial.println(" g");
 
   if (deviceConnected) {
 
-    char buf[16];
+    char buffer[16];
 
     snprintf(
-      buf,
-      sizeof(buf),
+      buffer,
+      sizeof(buffer),
       "%.2f",
       weight
     );
 
-    pCharacteristic->setValue(buf);
+    pCharacteristic->setValue(buffer);
     pCharacteristic->notify();
   }
 
@@ -116,11 +175,10 @@ void loop() {
 
       Serial.println("Taring...");
 
-      scale.tare();
+      scale.tare(10);
 
       Serial.println("Tare complete.");
     }
   }
-
-  delay(50);
 }
+
