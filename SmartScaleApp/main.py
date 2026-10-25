@@ -18,8 +18,6 @@ HOLD_SECONDS = 2.0
 
 
 class ScaleBLE:
-    """Runs Bleak in a dedicated asyncio thread."""
-
     def __init__(self, on_weight, on_status):
         self.on_weight = on_weight
         self.on_status = on_status
@@ -114,18 +112,14 @@ class RecipeApp:
 
         self.step_index = 0
 
-        # Raw reading from the scale.
         self.weight = 0.0
 
-        # Weight at the beginning of the current step.
         self.baseline = 0.0
 
-        # Used for the "hold steady" timer.
         self.held_since = None
 
         self.done = False
 
-        # Communication from BLE thread -> GUI thread.
         self.ble_queue = queue.Queue()
 
         self.ble = ScaleBLE(
@@ -142,13 +136,9 @@ class RecipeApp:
 
         self.process_ble_queue()
 
-        # Start BLE automatically.
         self.ble.start()
 
-    # ---------------------------------------------------------
     # GUI
-    # ---------------------------------------------------------
-
     def build_gui(self):
         self.root.title(self.recipe["name"])
         self.root.geometry("900x650")
@@ -180,10 +170,7 @@ class RecipeApp:
             thickness=25
         )
 
-        # -----------------------------------------------------
         # Header
-        # -----------------------------------------------------
-
         header = tk.Frame(
             self.root,
             bg="#202124"
@@ -215,10 +202,7 @@ class RecipeApp:
             pady=8
         )
 
-        # -----------------------------------------------------
         # Step counter
-        # -----------------------------------------------------
-
         self.step_counter = tk.Label(
             self.root,
             text="",
@@ -228,10 +212,7 @@ class RecipeApp:
         )
         self.step_counter.pack(pady=(15, 5))
 
-        # -----------------------------------------------------
         # Main card
-        # -----------------------------------------------------
-
         self.card = tk.Frame(
             self.root,
             bg="#292a2d",
@@ -258,10 +239,7 @@ class RecipeApp:
             pady=(10, 25)
         )
 
-        # -----------------------------------------------------
         # Weight display
-        # -----------------------------------------------------
-
         self.weight_label = tk.Label(
             self.card,
             text="",
@@ -306,10 +284,7 @@ class RecipeApp:
             pady=15
         )
 
-        # -----------------------------------------------------
         # Buttons
-        # -----------------------------------------------------
-
         controls = tk.Frame(
             self.root,
             bg="#202124"
@@ -360,10 +335,7 @@ class RecipeApp:
 
         self.update_display()
 
-    # ---------------------------------------------------------
     # BLE communication
-    # ---------------------------------------------------------
-
     def queue_weight(self, weight):
         self.ble_queue.put(("weight", weight))
 
@@ -420,10 +392,7 @@ class RecipeApp:
                 fg="#ea4335"
             )
 
-    # ---------------------------------------------------------
     # Recipe state
-    # ---------------------------------------------------------
-
     def current_step(self):
         if self.done:
             return None
@@ -451,10 +420,7 @@ class RecipeApp:
             self.relative_weight() - target
         ) <= TOLERANCE
 
-    # ---------------------------------------------------------
     # Display
-    # ---------------------------------------------------------
-
     def update_display(self):
         if self.done:
             self.show_complete()
@@ -622,10 +588,7 @@ class RecipeApp:
 
         self.done = True
 
-    # ---------------------------------------------------------
     # Step controls
-    # ---------------------------------------------------------
-
     def advance_step(self):
         self.step_index += 1
         self.baseline = self.weight
@@ -673,10 +636,7 @@ class RecipeApp:
 
         self.update_display()
 
-    # ---------------------------------------------------------
     # Scale controls
-    # ---------------------------------------------------------
-
     def tare(self):
         self.baseline = self.weight
         self.held_since = None
@@ -688,18 +648,12 @@ class RecipeApp:
 
         self.update_display()
 
-    # ---------------------------------------------------------
     # Timing
-    # ---------------------------------------------------------
-
     def monotonic_time(self):
         import time
         return time.monotonic()
 
-    # ---------------------------------------------------------
     # Shutdown
-    # ---------------------------------------------------------
-
     def close(self):
         self.done = True
 
